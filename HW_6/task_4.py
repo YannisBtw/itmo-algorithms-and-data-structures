@@ -26,8 +26,8 @@ class AVLTree:
 
     def _get_balance(self, node):
         return (
-            self._get_height(node.right)
-            - self._get_height(node.left)
+                self._get_height(node.right)
+                - self._get_height(node.left)
         )
 
     def _rotate_left(self, node):
