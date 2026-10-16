@@ -9,208 +9,234 @@ class Node:
         self.height = 1
 
 
-def get_height(node):
-    if node is None:
-        return 0
-    return node.height
+class AVLTree:
+    def __init__(self):
+        self.root = None
 
+    def _get_height(self, node):
+        if node is None:
+            return 0
+        return node.height
 
-def update_height(node):
-    node.height = max(
-        get_height(node.left),
-        get_height(node.right)
-    ) + 1
+    def _update_height(self, node):
+        node.height = max(
+            self._get_height(node.left),
+            self._get_height(node.right)
+        ) + 1
 
+    def _get_balance(self, node):
+        return (
+            self._get_height(node.right)
+            - self._get_height(node.left)
+        )
 
-def get_balance(node):
-    return get_height(node.right) - get_height(node.left)
+    def _rotate_left(self, node):
+        new_root = node.right
 
+        node.right = new_root.left
+        new_root.left = node
 
-def rotate_left(node):
-    new_root = node.right
+        self._update_height(node)
+        self._update_height(new_root)
 
-    node.right = new_root.left
-    new_root.left = node
+        return new_root
 
-    update_height(node)
-    update_height(new_root)
+    def _rotate_right(self, node):
+        new_root = node.left
 
-    return new_root
+        node.left = new_root.right
+        new_root.right = node
 
+        self._update_height(node)
+        self._update_height(new_root)
 
-def rotate_right(node):
-    new_root = node.left
+        return new_root
 
-    node.left = new_root.right
-    new_root.right = node
+    def _balance(self, node):
+        self._update_height(node)
 
-    update_height(node)
-    update_height(new_root)
+        current_balance = self._get_balance(node)
 
-    return new_root
+        if current_balance == 2:
+            if self._get_balance(node.right) < 0:
+                node.right = self._rotate_right(node.right)
 
+            return self._rotate_left(node)
 
-def balance(node):
-    update_height(node)
+        if current_balance == -2:
+            if self._get_balance(node.left) > 0:
+                node.left = self._rotate_left(node.left)
 
-    current_balance = get_balance(node)
+            return self._rotate_right(node)
 
-    if current_balance == 2:
-        if get_balance(node.right) < 0:
-            node.right = rotate_right(node.right)
-
-        return rotate_left(node)
-
-    if current_balance == -2:
-        if get_balance(node.left) > 0:
-            node.left = rotate_left(node.left)
-
-        return rotate_right(node)
-
-    return node
-
-
-def add(node, key):
-    if node is None:
-        return Node(key)
-
-    if key < node.key:
-        node.left = add(node.left, key)
-
-    elif key > node.key:
-        node.right = add(node.right, key)
-
-    else:
         return node
 
-    return balance(node)
-
-
-def delete(node, key):
-    if node is None:
-        return None
-
-    if key < node.key:
-        node.left = delete(node.left, key)
-
-    elif key > node.key:
-        node.right = delete(node.right, key)
-
-    else:
-        if node.left is None:
-            return node.right
-
-        if node.right is None:
-            return node.left
-
-        successor = node.right
-
-        while successor.left is not None:
-            successor = successor.left
-
-        node.key = successor.key
-        node.right = delete(node.right, successor.key)
-
-    return balance(node)
-
-
-def exists(node, key):
-    while node is not None:
-        if key == node.key:
-            return True
+    def _insert(self, node, key):
+        if node is None:
+            return Node(key)
 
         if key < node.key:
-            node = node.left
+            node.left = self._insert(node.left, key)
+
+        elif key > node.key:
+            node.right = self._insert(node.right, key)
+
         else:
-            node = node.right
+            return node
 
-    return False
+        return self._balance(node)
 
+    def add(self, key):
+        self.root = self._insert(self.root, key)
 
-def next_key(node, key):
-    candidate = None
+    def _delete(self, node, key):
+        if node is None:
+            return None
 
-    while node is not None:
-        if node.key >= key:
-            candidate = node.key
-            node = node.left
+        if key < node.key:
+            node.left = self._delete(node.left, key)
+
+        elif key > node.key:
+            node.right = self._delete(node.right, key)
+
         else:
-            node = node.right
+            if node.left is None:
+                return node.right
 
-    return candidate
+            if node.right is None:
+                return node.left
+
+            successor = node.right
+
+            while successor.left is not None:
+                successor = successor.left
+
+            node.key = successor.key
+            node.right = self._delete(node.right, successor.key)
+
+        return self._balance(node)
+
+    def delete(self, key):
+        self.root = self._delete(self.root, key)
+
+    def exists(self, key):
+        current = self.root
+
+        while current is not None:
+            if key == current.key:
+                return True
+
+            if key < current.key:
+                current = current.left
+            else:
+                current = current.right
+
+        return False
+
+    def next_key(self, key):
+        current = self.root
+        candidate = None
+
+        while current is not None:
+            if current.key >= key:
+                candidate = current.key
+                current = current.left
+            else:
+                current = current.right
+
+        return candidate
+
+    def prev_key(self, key):
+        current = self.root
+        candidate = None
+
+        while current is not None:
+            if current.key <= key:
+                candidate = current.key
+                current = current.right
+            else:
+                current = current.left
+
+        return candidate
+
+    def root_key(self):
+        if self.root is None:
+            return None
+        return self.root.key
+
+    def height(self):
+        return self._get_height(self.root)
+
+    def preorder(self):
+        result = []
+
+        if self.root is None:
+            return result
+
+        stack = [self.root]
+
+        while stack:
+            node = stack.pop()
+            result.append(node.key)
+
+            if node.right is not None:
+                stack.append(node.right)
+
+            if node.left is not None:
+                stack.append(node.left)
+
+        return result
 
 
-def prev_key(node, key):
-    candidate = None
+def main():
+    q = int(sys.stdin.readline())
 
-    while node is not None:
-        if node.key <= key:
-            candidate = node.key
-            node = node.right
-        else:
-            node = node.left
+    tree = AVLTree()
+    answers = []
 
-    return candidate
+    for _ in range(q):
+        command = sys.stdin.readline().split()
+        operation = command[0]
+
+        if operation == "add":
+            key = int(command[1])
+            tree.add(key)
+
+        elif operation == "del":
+            key = int(command[1])
+            tree.delete(key)
+
+        elif operation == "exists":
+            key = int(command[1])
+            answers.append("YES" if tree.exists(key) else "NO")
+
+        elif operation == "next":
+            key = int(command[1])
+            answers.append(str(tree.next_key(key)))
+
+        elif operation == "prev":
+            key = int(command[1])
+            answers.append(str(tree.prev_key(key)))
+
+        elif operation == "root":
+            root_key = tree.root_key()
+            answers.append(
+                str(root_key) if root_key is not None else "Empty"
+            )
+
+        elif operation == "height":
+            answers.append(str(tree.height()))
+
+        elif operation == "print":
+            traversal = tree.preorder()
+
+            if traversal:
+                answers.append(" ".join(map(str, traversal)))
+            else:
+                answers.append("Empty")
+
+    sys.stdout.write("\n".join(answers))
 
 
-def preorder(root):
-    if root is None:
-        return "Empty"
-
-    result = []
-    stack = [root]
-
-    while stack:
-        node = stack.pop()
-        result.append(str(node.key))
-
-        if node.right is not None:
-            stack.append(node.right)
-
-        if node.left is not None:
-            stack.append(node.left)
-
-    return " ".join(result)
-
-
-q = int(sys.stdin.readline())
-
-root = None
-answer = []
-
-for _ in range(q):
-    command = sys.stdin.readline().split()
-
-    if command[0] == "add":
-        key = int(command[1])
-        root = add(root, key)
-
-    elif command[0] == "del":
-        key = int(command[1])
-        root = delete(root, key)
-
-    elif command[0] == "exists":
-        key = int(command[1])
-        answer.append("YES" if exists(root, key) else "NO")
-
-    elif command[0] == "next":
-        key = int(command[1])
-        answer.append(str(next_key(root, key)))
-
-    elif command[0] == "prev":
-        key = int(command[1])
-        answer.append(str(prev_key(root, key)))
-
-    elif command[0] == "root":
-        if root is None:
-            answer.append("Empty")
-        else:
-            answer.append(str(root.key))
-
-    elif command[0] == "height":
-        answer.append(str(get_height(root)))
-
-    elif command[0] == "print":
-        answer.append(preorder(root))
-
-sys.stdout.write("\n".join(answer))
+if __name__ == "__main__":
+    main()
