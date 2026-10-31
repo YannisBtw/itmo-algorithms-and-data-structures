@@ -1,3 +1,5 @@
+# https://contest.yandex.ru/contest/102171/run-report/170004051/
+
 import sys
 
 
